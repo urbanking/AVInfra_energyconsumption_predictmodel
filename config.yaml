@@ -11,6 +11,9 @@ general:
   energy_reduction:
     clustering: 0.2  # 고정된 에너지 절감 비율
     optimal_routing: 0.07  # 고정된 에너지 절감 비율
+    levels:
+      clustering: [0.1, 0.2, 0.3]
+      optimal_routing: [0.03, 0.05, 0.07]
   carbon_intensity:
     gasoline: 2.32  # kg CO₂/ℓ (고정된 탄소 배출 계수)
     electric: 0.5    # kg CO₂/kWh (고정된 탄소 배출 계수)
@@ -27,38 +30,38 @@ general:
     fuel_efficiency_gasoline:
       distribution: normal
       mean: 10
-      std_dev: 0.0  # 고정된 연비로 표준편차 제거
-      min: 10        # 최소값 고정
+      std_dev: 0.1  # 소폭 변경
+      min: 9.5        # 최소값 조정
     fuel_efficiency_electric:
       distribution: normal
       mean: 5
-      std_dev: 0.0  # 고정된 전비로 표준편차 제거
-      min: 5         # 최소값 고정
+      std_dev: 0.1
+      min: 4.5
     computing_power:
       distribution: normal
       mean: 2.5
-      std_dev: 0.0  # 고정된 컴퓨팅 파��로 표준편차 제거
-      min: 2.5        # 최소값 고정
+      std_dev: 0.1
+      min: 2.3
     efficiency_a:
       distribution: normal
       mean: 1.0
       std_dev: 0.05
-      min: 0.1        # 최소값 추가
+      min: 0.9
     error_term:
       distribution: normal
       mean: 0.0
       std_dev: 10000
-      min: 0.0        # 최소값 추가
+      min: 0.0
     carbon_intensity_gasoline:
       distribution: normal
       mean: 2.32
-      std_dev: 0.0   # 고정된 탄소 배출 계수로 표준편차 제거
-      min: 2.32        # 최소값 고정
+      std_dev: 0.01
+      min: 2.3
     carbon_intensity_electric:
       distribution: normal
       mean: 0.5
-      std_dev: 0.0   # 고정된 탄소 배출 계수로 표준편차 제거
-      min: 0.5        # 최소값 고정
+      std_dev: 0.01
+      min: 0.49
 
 vehicle_ratio_changes:
   gasoline:
@@ -97,7 +100,7 @@ traffic_model:
 scenarios:
   adoption_rates: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
   num_combinations_per_rate: 10  # 각 도입률당 생성할 시나리오 수
-  efficiency_a_values: [0.9, 1.0]  # 추가된 부분
+  efficiency_a_values: [0.7,0.9, 1.0]  # 추가된 부분
 
 # 기본 시나리오 패턴은 제거되었습니다. 시뮬레이션에서 동적으로 생성됩니다.
 

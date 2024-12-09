@@ -24,31 +24,35 @@ def logistic_growth(x, K, r, x0):
 
 def generate_scenarios(base_config):
     """
-    Generate multiple scenarios based on adoption rates and efficiency coefficients using parameter combinations.
-    
-    Parameters:
-    - base_config: Configuration dictionary
-    Returns:
-    - List of scenarios
+    energy_reduction의 다양한 레벨을 고려하여 시나리오 생성.
     """
     scenarios = []
     adoption_rates = base_config.get('scenarios', {}).get('adoption_rates', range(0, 101, 10))
     efficiency_a_values = base_config.get('scenarios', {}).get('efficiency_a_values', [1.0])
+    clustering_levels = base_config['general']['energy_reduction']['levels']['clustering']
+    optimal_routing_levels = base_config['general']['energy_reduction']['levels']['optimal_routing']
+    num_combinations_per_rate = base_config.get('scenarios', {}).get('num_combinations_per_rate', 10)
     
     # 파라미터 조합 생성
-    for a_value, rate in product(efficiency_a_values, adoption_rates):
+    for a_value, rate, clustering, optimal_routing in product(
+        efficiency_a_values, adoption_rates, clustering_levels, optimal_routing_levels
+    ):
         adoption_rate = rate / 100.0
         
-        for _ in range(base_config.get('scenarios', {}).get('num_combinations_per_rate', 10)):
+        for _ in range(num_combinations_per_rate):
             # 고정된 차량 비율 반영
             gasoline_ratio = 0.95 * (1 - adoption_rate)
             electric_ratio = 0.05 * (1 - adoption_rate)
             autonomous_ratio = adoption_rate
             
             scenario = {
-                'name': f"a {a_value} - adoption {rate}% - Gasoline {gasoline_ratio:.2f}, Electric {electric_ratio:.2f}, Autonomous {autonomous_ratio:.2f}",
+                'name': f"a {a_value} - adoption {rate}% - Gasoline {gasoline_ratio:.2f}, Electric {electric_ratio:.2f}, Autonomous {autonomous_ratio:.2f} - Clustering {clustering}, Routing {optimal_routing}",
                 'adoption_rate': adoption_rate,
                 'efficiency_a': a_value,
+                'energy_reduction': {
+                    'clustering': clustering,
+                    'optimal_routing': optimal_routing
+                },
                 'vehicle_ratios': {
                     'gasoline': gasoline_ratio,
                     'electric': electric_ratio,
@@ -60,7 +64,7 @@ def generate_scenarios(base_config):
 
 def run_simulation(config, scenario, num_simulations=1000):
     """
-    단일 시나리오에 대한 시뮬레이션을 벡터화하여 실행합니다.
+    몬테카를로 방식으로 시뮬레이션을 실행.
     """
     adoption_rate = scenario['adoption_rate']
     efficiency_a = scenario.get('efficiency_a', 1.0)
@@ -101,10 +105,77 @@ def run_simulation(config, scenario, num_simulations=1000):
         simulation_count
     )
 
+    # 모든 불확실한 파라미터 샘플링
+    uncertainty = config['general']['uncertainty']
+    
+    fuel_efficiency_gasoline_samples = np.random.normal(
+        uncertainty['fuel_efficiency_gasoline']['mean'],
+        uncertainty['fuel_efficiency_gasoline']['std_dev'],
+        num_simulations
+    )
+    fuel_efficiency_gasoline_samples = np.maximum(fuel_efficiency_gasoline_samples, uncertainty['fuel_efficiency_gasoline']['min'])
+    
+    fuel_efficiency_electric_samples = np.random.normal(
+        uncertainty['fuel_efficiency_electric']['mean'],
+        uncertainty['fuel_efficiency_electric']['std_dev'],
+        num_simulations
+    )
+    fuel_efficiency_electric_samples = np.maximum(fuel_efficiency_electric_samples, uncertainty['fuel_efficiency_electric']['min'])
+    
+    computing_power_samples = np.random.normal(
+        uncertainty['computing_power']['mean'],
+        uncertainty['computing_power']['std_dev'],
+        num_simulations
+    )
+    computing_power_samples = np.maximum(computing_power_samples, uncertainty['computing_power']['min'])
+    
+    carbon_intensity_gasoline_samples = np.random.normal(
+        uncertainty['carbon_intensity_gasoline']['mean'],
+        uncertainty['carbon_intensity_gasoline']['std_dev'],
+        num_simulations
+    )
+    carbon_intensity_gasoline_samples = np.maximum(carbon_intensity_gasoline_samples, uncertainty['carbon_intensity_gasoline']['min'])
+    
+    carbon_intensity_electric_samples = np.random.normal(
+        uncertainty['carbon_intensity_electric']['mean'],
+        uncertainty['carbon_intensity_electric']['std_dev'],
+        num_simulations
+    )
+    carbon_intensity_electric_samples = np.maximum(carbon_intensity_electric_samples, uncertainty['carbon_intensity_electric']['min'])
+    
+    efficiency_a_samples = np.random.normal(
+        uncertainty['efficiency_a']['mean'],
+        uncertainty['efficiency_a']['std_dev'],
+        num_simulations
+    )
+    efficiency_a_samples = np.maximum(efficiency_a_samples, uncertainty['efficiency_a']['min'])
+    
+    error_term_samples = np.random.normal(
+        uncertainty['error_term']['mean'],
+        uncertainty['error_term']['std_dev'],
+        num_simulations
+    )
+    error_term_samples = np.maximum(error_term_samples, uncertainty['error_term']['min'])
+
+    # energy_reduction 레벨 적용
+    clustering_reduction = scenario['energy_reduction']['clustering']
+    routing_reduction = scenario['energy_reduction']['optimal_routing']
+    energy_reduction = clustering_reduction + routing_reduction
+    energy_reduction = min(energy_reduction, 
+                           config['general']['energy_reduction']['clustering'] +
+                           config['general']['energy_reduction']['optimal_routing'])
+
     # VehicleModel 인스턴스 생성 (벡터화된 입력 사용)
-    vehicle_model = VehicleModel(config, scenario, average_speed, total_travel_time,
-                                 electric_efficiency_samples, computing_power_samples,
-                                 efficiency_a_samples, error_term_samples)
+    vehicle_model = VehicleModel(
+        config, scenario, average_speed, total_travel_time,
+        fuel_efficiency_electric_samples,
+        fuel_efficiency_gasoline_samples,
+        computing_power_samples,
+        carbon_intensity_electric_samples,
+        carbon_intensity_gasoline_samples,
+        efficiency_a_samples,
+        error_term_samples
+    )
 
     # 에너지 및 배출량 계산
     total_electric_energy, total_electric_carbon = vehicle_model.calculate_total_electric_energy_and_emissions()
@@ -181,11 +252,11 @@ def main():
     # Load configuration
     config = load_config('config.yaml')
 
-    # Generate scenarios
+    # Generate scenarios with energy_reduction levels
     scenarios = generate_scenarios(config)
     print(f"Total scenarios generated: {len(scenarios)}")
 
-    # Run simulations for all scenarios
+    # Run simulations for all scenarios using Monte Carlo method
     results = []
     for scenario in scenarios:
         print(f"Running simulation for {scenario['name']} with vehicle ratios: {scenario['vehicle_ratios']} and efficiency_a: {scenario['efficiency_a']}...")

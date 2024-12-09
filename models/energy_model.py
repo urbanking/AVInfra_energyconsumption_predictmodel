@@ -3,7 +3,10 @@
 from models.vehicle_model import VehicleModel
 
 class EnergyModel:
-    def __init__(self, config, scenario, average_speed, total_travel_time):
+    def __init__(self, config, scenario, average_speed, total_travel_time,
+                 fuel_efficiency_electric_samples, fuel_efficiency_gasoline_samples,
+                 computing_power_samples, carbon_intensity_electric_samples,
+                 carbon_intensity_gasoline_samples, efficiency_a_samples, error_term_samples):
         """
         EnergyModel 클래스 초기화
         Parameters:
@@ -11,6 +14,13 @@ class EnergyModel:
         - scenario: 시나리오 딕셔너리
         - average_speed: 평균 속도 (km/h)
         - total_travel_time: 총 운행 시간 (시간)
+        - fuel_efficiency_electric_samples: 전기 연비 샘플 (numpy 배열)
+        - fuel_efficiency_gasoline_samples: 휘발유 연비 샘플 (numpy 배열)
+        - computing_power_samples: 컴퓨팅 파워 샘플 (numpy 배열)
+        - carbon_intensity_electric_samples: 전기 탄소 배출 계수 샘플 (numpy 배열)
+        - carbon_intensity_gasoline_samples: 휘발유 탄소 배출 계수 샘플 (numpy 배열)
+        - efficiency_a_samples: 효율성 계수 a 샘플 (numpy 배열)
+        - error_term_samples: 오차항 e 샘플 (numpy 배열)
         """
         self.config = config
         self.scenario = scenario
@@ -18,7 +28,16 @@ class EnergyModel:
         self.total_travel_time = total_travel_time
 
         # 차량 모델 인스턴스 생성
-        self.vehicle_model = VehicleModel(config, scenario, average_speed, total_travel_time)
+        self.vehicle_model = VehicleModel(
+            config, scenario, average_speed, total_travel_time,
+            fuel_efficiency_electric_samples,
+            fuel_efficiency_gasoline_samples,
+            computing_power_samples,
+            carbon_intensity_electric_samples,
+            carbon_intensity_gasoline_samples,
+            efficiency_a_samples,
+            error_term_samples
+        )
 
         # RSU 에너지 소비량 계산
         self.E_RSU = self.calculate_rsu_energy()
