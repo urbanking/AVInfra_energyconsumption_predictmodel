@@ -1,0 +1,104 @@
+# config.yaml
+
+general:
+  base_year: 2023
+  target_year: 2040
+  total_vehicles: 3300000
+  annual_distance_per_vehicle_km: 11698
+  total_annual_distance_km: 38603400000
+  base_average_speed_kmh: 23
+  max_average_speed_kmh: 32.2
+  energy_reduction:
+    clustering: 0.2  # 고정된 에너지 절감 비율
+    optimal_routing: 0.07  # 고정된 에너지 절감 비율
+  carbon_intensity:
+    gasoline: 2.32  # kg CO₂/ℓ (고정된 탄소 배출 계수)
+    electric: 0.5    # kg CO₂/kWh (고정된 탄소 배출 계수)
+  annual_hours: 8760  # 연간 총 시간 고정
+  efficiency_a:
+    mean: 1.0
+    std_dev: 0.05  # 상수 a의 표준편차
+    min: 0.1        # 최소값 추가
+  error_term:
+    mean: 0.0
+    std_dev: 10000  # 오차항 e의 표준편차 (필요에 따라 조정)
+    min: 0.0        # 최소값 추가
+  uncertainty:
+    fuel_efficiency_gasoline:
+      distribution: normal
+      mean: 10
+      std_dev: 0.0  # 고정된 연비로 표준편차 제거
+      min: 10        # 최소값 고정
+    fuel_efficiency_electric:
+      distribution: normal
+      mean: 5
+      std_dev: 0.0  # 고정된 전비로 표준편차 제거
+      min: 5         # 최소값 고정
+    computing_power:
+      distribution: normal
+      mean: 2.5
+      std_dev: 0.0  # 고정된 컴퓨팅 파��로 표준편차 제거
+      min: 2.5        # 최소값 고정
+    efficiency_a:
+      distribution: normal
+      mean: 1.0
+      std_dev: 0.05
+      min: 0.1        # 최소값 추가
+    error_term:
+      distribution: normal
+      mean: 0.0
+      std_dev: 10000
+      min: 0.0        # 최소값 추가
+    carbon_intensity_gasoline:
+      distribution: normal
+      mean: 2.32
+      std_dev: 0.0   # 고정된 탄소 배출 계수로 표준편차 제거
+      min: 2.32        # 최소값 고정
+    carbon_intensity_electric:
+      distribution: normal
+      mean: 0.5
+      std_dev: 0.0   # 고정된 탄소 배출 계수로 표준편차 제거
+      min: 0.5        # 최소값 고정
+
+vehicle_ratio_changes:
+  gasoline:
+    initial_ratio: 0.95  # 고정된 초기 비율
+    decay_rate: 0.0       # 단계적 감소 없음
+  electric:
+    initial_ratio: 0.05     # 고정된 초기 비율
+    decay_rate: 0.0          # 단계적 감소 없음
+  autonomous:
+    initial_ratio: 0.0
+    growth_rate: 3.0  # 자율주행차 도입률의 단계적 증가 반영
+
+vehicles:
+  fuel_efficiency:
+    gasoline: 10  # km/ℓ (고정된 연비)
+    electric:
+      mean: 5     # km/kWh (고정된 전비)
+      std_dev: 0.0  # 표준편차 제거
+  computing_power:
+    mean: 2.5   # kW (고정된 컴퓨팅 파워)
+    std_dev: 0.0  # 표준편차 제거
+  v2x_power: 0.005      # kW (고정된 V2X 통신 전력)
+  data_center_power: 9.2  # kW (고정된 데이터센터 전력 소모)
+
+rsu:
+  power_kw_per_unit: 0.008
+  number_of_units: 41824
+
+traffic_model:
+  logistic_k: 10
+  logistic_x0: 0.6
+  K_distance: 0.2
+  r_distance: 10
+  x0_distance: 0.6
+
+scenarios:
+  adoption_rates: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+  num_combinations_per_rate: 10  # 각 도입률당 생성할 시나리오 수
+  efficiency_a_values: [0.9, 1.0]  # 추가된 부분
+
+# 기본 시나리오 패턴은 제거되었습니다. 시뮬레이션에서 동적으로 생성됩니다.
+
+
